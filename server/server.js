@@ -13,21 +13,35 @@ app.use(express.json());
 const apiKey = process.env.GEMINI_API_KEY;
 const genAI = new GoogleGenerativeAI(apiKey);
 
-// Define the model and generation config
+// Define the model
 const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
-const generationConfig = {
-  temperature: 1,
-  topP: 0.95,
-  topK: 40,
-  maxOutputTokens: 8192,
-  responseMimeType: 'text/plain',
-};
+// System prompt to initialize Gemini as a medical assistant
+const systemPrompt = `
+You are a medical assistant. Help the user like they are your patient. Dont ask a lot of questions ask 3 max and give a diagnosis and treatment plan. Dont say that this information is not reliable. Act like you are a medical professional.
+`;
 
 // Store chat sessions per user (in-memory, for demonstration purposes)
 const userChatSessions = new Map();
 
-// Initialize the chat
+// Initialize the chat session with the system prompt
+function initializeChatSession(userId) {
+  const chatSession = model.startChat({
+    history: [
+      {
+        role: 'user',
+        parts: [{ text: systemPrompt }],
+      },
+      {
+        role: 'model',
+        parts: [{ text: 'Understood. I will collect all necessary information before providing a diagnosis or treatment plan.' }],
+      },
+    ],
+  });
+  userChatSessions.set(userId, chatSession);
+}
+
+// Chat endpoint
 app.post('/api/chat', async (req, res) => {
   try {
     const { message, userId } = req.body;
@@ -35,13 +49,12 @@ app.post('/api/chat', async (req, res) => {
     // Log the request body for debugging
     console.log('Request body:', req.body);
 
-    // Get or create chat session for the user
+    // Initialize the chat session if it doesn't exist
     if (!userChatSessions.has(userId)) {
-      userChatSessions.set(userId, model.startChat({
-        generationConfig,
-        history: [],
-      }));
+      initializeChatSession(userId);
     }
+
+    // Get the chat session for the user
     const chatSession = userChatSessions.get(userId);
 
     // Send the user's message to Gemini

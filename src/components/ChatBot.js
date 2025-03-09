@@ -1,10 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 
 const Chat = () => {
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState([]);
-  const [userId] = useState(Date.now().toString()); // Generate a unique userId for each session
+  const [userId] = useState(Date.now().toString());
+  const chatWindowRef = useRef(null);
+
+  useEffect(() => {
+    // Scroll to the latest message
+    if (chatWindowRef.current) {
+      chatWindowRef.current.scrollTop = chatWindowRef.current.scrollHeight;
+    }
+  }, [messages]);
 
   const handleSend = async () => {
     if (input.trim() === '') return;
@@ -16,34 +24,32 @@ const Chat = () => {
     ]);
 
     try {
-      // Call your backend server
+      // Call backend server
       const response = await axios.post(
         'http://localhost:3001/api/chat',
         { message: input, userId }
       );
 
-      // Add bot response to chat
+      // Add formatted bot response
       setMessages((prevMessages) => [
         ...prevMessages,
         { text: response.data.response, sender: 'bot' },
       ]);
     } catch (error) {
       console.error('Error calling Gemini API:', error);
-      // Add error message to chat
       setMessages((prevMessages) => [
         ...prevMessages,
         { text: 'Failed to get a response from the bot.', sender: 'bot' },
       ]);
     }
 
-    // Clear input
     setInput('');
   };
 
   return (
     <div style={styles.pageContainer}>
       <div style={styles.container}>
-        <div style={styles.chatWindow}>
+        <div ref={chatWindowRef} style={styles.chatWindow}>
           {messages.map((msg, index) => (
             <div
               key={index}
@@ -52,7 +58,12 @@ const Chat = () => {
                 ...(msg.sender === 'user' ? styles.userMessage : styles.botMessage),
               }}
             >
-              <strong>{msg.sender}:</strong> {msg.text}
+              <strong>{msg.sender === 'user' ? 'You' : 'Bot'}:</strong>
+              {msg.sender === 'bot' ? (
+                <div dangerouslySetInnerHTML={{ __html: formatBotMessage(msg.text) }} />
+              ) : (
+                <span> {msg.text}</span>
+              )}
             </div>
           ))}
         </div>
@@ -63,7 +74,7 @@ const Chat = () => {
             onChange={(e) => setInput(e.target.value)}
             placeholder="Type a message..."
             style={styles.input}
-            onKeyPress={(e) => e.key === 'Enter' && handleSend()} // Send message on Enter key
+            onKeyPress={(e) => e.key === 'Enter' && handleSend()}
           />
           <button onClick={handleSend} style={styles.button}>
             Send
@@ -74,6 +85,22 @@ const Chat = () => {
   );
 };
 
+// Function to format bot responses properly
+const formatBotMessage = (text) => {
+  if (!text) return '';
+
+  // Convert new lines into <br> for proper formatting
+  let formattedText = text.replace(/\n/g, '<br>');
+
+  // Convert lists (if any) into HTML lists
+  formattedText = formattedText.replace(/- (.+)/g, '<li>$1</li>');
+  if (formattedText.includes('<li>')) {
+    formattedText = `<ul>${formattedText}</ul>`;
+  }
+
+  return formattedText;
+};
+
 export default Chat;
 
 // Styles
@@ -82,8 +109,8 @@ const styles = {
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
-    height: '100vh', // Full viewport height
-    backgroundColor: '#f0f0f0', // Light gray background for the page
+    height: '100vh',
+    backgroundColor: '#f0f0f0',
   },
   container: {
     display: 'flex',
@@ -106,7 +133,7 @@ const styles = {
     marginBottom: '10px',
     padding: '10px',
     borderRadius: '10px',
-    maxWidth: '70%',
+    maxWidth: '80%',
     wordWrap: 'break-word',
   },
   userMessage: {
