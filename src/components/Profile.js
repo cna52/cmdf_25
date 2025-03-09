@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import '../Patients.css';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 
 const Profile = () => {
   class Patient {
-    constructor(name, age, weight, height, allergies) {
+    constructor(name, age, weight, height, allergies = []) {
       this.name = name;
       this.age = age;
       this.weight = weight;
@@ -14,15 +14,27 @@ const Profile = () => {
     }
   }
 
-  const patient = new Patient("Emmy Fong", "100", "100", "100", "leaves");
+  const [user, setUser] = useState(null);
+  const [patient, setPatient] = useState(null);
+  const [newAllergy, setNewAllergy] = useState("");
+  const [isEditingAllergies, setIsEditingAllergies] = useState(false);
+
+  useEffect(() => {
+    // Fetch user data from localStorage
+    const storedUser = JSON.parse(localStorage.getItem('user'));
+    if (storedUser) {
+      setUser(storedUser);
+      // Create a new patient object using the user's name
+      const newPatient = new Patient(storedUser.name, "100", "100", "100", ["leaves"]);
+      setPatient(newPatient);
+    }
+  }, []);
+
   const patients = [
-    new Patient("Emmy Fong", "100", "100", "100", "leaves"),
-    new Patient("Emmy Song", "100", "100", "100", "leaves"),
-    new Patient("Emmy Wong", "100", "100", "100", "leaves"),
-    new Patient("Emmy Long", "100", "100", "100", "leaves")
+    new Patient("Emmy Long", "100", "100", "100", ["peanuts"])
   ];
 
-  const isDoctor = true;
+  const isDoctor = false;
 
   const [date, setDate] = useState(new Date());
   const [appointments, setAppointments] = useState([]);
@@ -75,6 +87,19 @@ const Profile = () => {
     return null;
   };
 
+  const handleAddAllergy = () => {
+    if (newAllergy.trim() !== "") {
+      const updatedAllergies = [...patient.allergies, newAllergy.trim()];
+      setPatient({ ...patient, allergies: updatedAllergies });
+      setNewAllergy("");
+    }
+  };
+
+  const handleRemoveAllergy = (index) => {
+    const updatedAllergies = patient.allergies.filter((_, i) => i !== index);
+    setPatient({ ...patient, allergies: updatedAllergies });
+  };
+
   const DoctorPage = () => (
     <div className="doctor-page">
       <h1>Doctor Dashboard</h1>
@@ -86,7 +111,7 @@ const Profile = () => {
             <p><strong>Age:</strong> {patient.age}</p>
             <p><strong>Height:</strong> {patient.height} cm</p>
             <p><strong>Weight:</strong> {patient.weight} kg</p>
-            <p><strong>Allergies:</strong> {patient.allergies}</p>
+            <p><strong>Allergies:</strong> {patient.allergies.join(", ")}</p>
             <button className="view-details-button">View Details</button>
           </div>
         ))}
@@ -94,30 +119,166 @@ const Profile = () => {
     </div>
   );
 
-  const PatientPage = () => (
+const PatientPage = () => {
+  const [editMode, setEditMode] = useState({
+    age: false,
+    height: false,
+    weight: false,
+    allergies: false,
+  });
+
+  const [editedValues, setEditedValues] = useState({
+    age: patient ? patient.age : "",
+    height: patient ? patient.height : "",
+    weight: patient ? patient.weight : "",
+  });
+
+  const [newAllergy, setNewAllergy] = useState("");
+
+  const handleEditToggle = (field) => {
+    setEditMode((prev) => ({ ...prev, [field]: !prev[field] }));
+  };
+
+  const handleInputChange = (field, value) => {
+    setEditedValues((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleSave = (field) => {
+    setPatient((prev) => ({ ...prev, [field]: editedValues[field] }));
+    setEditMode((prev) => ({ ...prev, [field]: false }));
+  };
+
+  const handleAddAllergy = () => {
+    if (newAllergy.trim() !== "") {
+      const updatedAllergies = [...patient.allergies, newAllergy.trim()];
+      setPatient((prev) => ({ ...prev, allergies: updatedAllergies }));
+      setNewAllergy("");
+    }
+  };
+
+  const handleRemoveAllergy = (index) => {
+    const updatedAllergies = patient.allergies.filter((_, i) => i !== index);
+    setPatient((prev) => ({ ...prev, allergies: updatedAllergies }));
+  };
+
+  return (
     <div className="patient-page">
-      <h1>Welcome, {patient.name}</h1>
+      <h1>Welcome, {patient ? patient.name : "Guest"}</h1>
       <div className="patient-info">
         <h2>Your Statistics</h2>
         <div className="stats-container">
           <div className="stat-card">
             <strong>Age</strong>
-            <p>{patient.age} years</p>
+            <p>{patient ? patient.age : "N/A"} years</p>
           </div>
           <div className="stat-card">
             <strong>Height</strong>
-            <p>{patient.height} cm</p>
+            <p>{patient ? patient.height : "N/A"} cm</p>
           </div>
           <div className="stat-card">
             <strong>Weight</strong>
-            <p>{patient.weight} kg</p>
+            <p>{patient ? patient.weight : "N/A"} kg</p>
           </div>
           <div className="stat-card">
             <strong>Allergies</strong>
-            <p>{patient.allergies}</p>
+            <p>{patient ? patient.allergies.join(", ") : "N/A"}</p>
           </div>
         </div>
       </div>
+
+      {/* Floating Editorial Blocks */}
+      <div className="editorial-blocks-container">
+        <div className="editorial-block">
+          <h3>Edit Age</h3>
+          {editMode.age ? (
+            <div>
+              <input
+                type="text"
+                value={editedValues.age}
+                onChange={(e) => handleInputChange("age", e.target.value)}
+                placeholder="Enter your age"
+              />
+              <button onClick={() => handleSave("age")}>Save</button>
+              <button className="cancel-button" onClick={() => handleEditToggle("age")}>
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <button onClick={() => handleEditToggle("age")}>Edit Age</button>
+          )}
+        </div>
+
+        <div className="editorial-block">
+          <h3>Edit Height</h3>
+          {editMode.height ? (
+            <div>
+              <input
+                type="text"
+                value={editedValues.height}
+                onChange={(e) => handleInputChange("height", e.target.value)}
+                placeholder="Enter your height"
+              />
+              <button onClick={() => handleSave("height")}>Save</button>
+              <button className="cancel-button" onClick={() => handleEditToggle("height")}>
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <button onClick={() => handleEditToggle("height")}>Edit Height</button>
+          )}
+        </div>
+
+        <div className="editorial-block">
+          <h3>Edit Weight</h3>
+          {editMode.weight ? (
+            <div>
+              <input
+                type="text"
+                value={editedValues.weight}
+                onChange={(e) => handleInputChange("weight", e.target.value)}
+                placeholder="Enter your weight"
+              />
+              <button onClick={() => handleSave("weight")}>Save</button>
+              <button className="cancel-button" onClick={() => handleEditToggle("weight")}>
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <button onClick={() => handleEditToggle("weight")}>Edit Weight</button>
+          )}
+        </div>
+
+        <div className="editorial-block">
+          <h3>Edit Allergies</h3>
+          <div className="allergies-list">
+            {patient && patient.allergies.map((allergy, index) => (
+              <div key={index} className="allergy-item">
+                <span>{allergy}</span>
+                <button
+                  onClick={() => handleRemoveAllergy(index)}
+                  className="remove-allergy-button"
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+          <div className="add-allergy-form">
+            <input
+              type="text"
+              placeholder="Add an allergy"
+              value={newAllergy}
+              onChange={(e) => setNewAllergy(e.target.value)}
+              className="allergy-input"
+            />
+            <button onClick={handleAddAllergy} className="add-allergy-button">
+              Add
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Calendar Section */}
       <div className="calendar-section">
         <h2>Appointment Calendar</h2>
         <div className="calendar-container">
@@ -138,7 +299,7 @@ const Profile = () => {
                   value={appointmentTitle}
                   onChange={(e) => setAppointmentTitle(e.target.value)}
                   required
-                  autoFocus // Ensure the input field is focused
+                  autoFocus
                 />
                 <button type="submit">Add Appointment</button>
                 <button type="button" onClick={() => setShowAppointmentForm(false)}>
@@ -147,20 +308,11 @@ const Profile = () => {
               </form>
             </div>
           )}
-          {selectedEvents.length > 0 && (
-            <div className="event-popout">
-              <h3>Events on {selectedDate.toDateString()}</h3>
-              <ul>
-                {selectedEvents.map((event, index) => (
-                  <li key={index}>{event.title}</li>
-                ))}
-              </ul>
-            </div>
-          )}
         </div>
       </div>
     </div>
   );
+};
 
   return (
     <div className="profile-container">
