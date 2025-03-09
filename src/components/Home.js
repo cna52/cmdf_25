@@ -1,8 +1,26 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import './Home.css';
 
 const Home = () => {
-    const [isLoggedIn, setIsLoggedIn] = useState(true);
+    const [isLoggedIn, setIsLoggedIn] = useState(false); // Default to false
+    const [user, setUser] = useState({}); // Default to an empty object
+
+    useEffect(() => {
+        // Check if the user data is in localStorage
+        const user = JSON.parse(localStorage.getItem('user'));
+
+        // If user exists, set isLoggedIn to true
+        if (user) {
+            setIsLoggedIn(true);
+            setUser(user);
+        } else {
+            setIsLoggedIn(false); // If user does not exist, set isLoggedIn to false
+        }
+    }, []); // Empty dependency array means this effect runs only once when the component mounts
+
+    const handleLogout = () => {
+        localStorage.removeItem('user'); // Remove user data from localStorage
+    };
 
     return (
         <div>
@@ -19,7 +37,8 @@ const Home = () => {
                             // If logged in, show the logged-in options (this can be customized)
                             <>
                                 <button onClick={() => window.location.href='/profile'}>Profile</button>
-                                <button onClick={() => window.location.href='/settings'}>Settings</button>
+                                <button onClick={() => window.location.href='/ChatBot'}>ChatBot</button>
+                                <button onClick={handleLogout}>Log Out</button>
                             </>
                         )}
                     </div>
@@ -30,7 +49,7 @@ const Home = () => {
                         <h1>Welcome to the Home Page</h1>
                     ) : (
                         // If logged in, show a different homepage for logged-in users
-                        <h1>Welcome back to the Home Page!</h1>
+                        <h1>Welcome back, {user.name}</h1>
                     )}
                     <p>{!isLoggedIn ? 'This is the home page of our application.' : 'Here you can access your profile and settings.'}</p>
                 </div>
