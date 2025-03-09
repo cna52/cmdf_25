@@ -5,7 +5,8 @@ const NavBar = () => {
     const navLinks = [
         { name: 'Home', path: '/' },
         { name: 'Profile', path: '/profile' },
-        { name: 'LogIn', path: '/logIn' }
+        { name: 'LogIn', path: '/logIn' },
+        { name: 'ChatBot', path: '/ChatBot' }
     ];
     return (
         <nav className="navbar">
