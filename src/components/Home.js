@@ -1,7 +1,10 @@
 import React, {useState, useEffect} from 'react';
 import './Home.css';
+import { useNavigate } from 'react-router-dom';
+
 
 const Home = () => {
+    const navigate = useNavigate();
     const [isLoggedIn, setIsLoggedIn] = useState(false); // Default to false
     const [user, setUser] = useState({}); // Default to an empty object
 
@@ -20,6 +23,9 @@ const Home = () => {
 
     const handleLogout = () => {
         localStorage.removeItem('user'); // Remove user data from localStorage
+        setIsLoggedIn(false);
+        setUser(null);
+        navigate('/'); // Redirect to Home
     };
 
     return (

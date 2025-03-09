@@ -1,12 +1,14 @@
 import React, {useState, useEffect} from 'react';
 import './LogIn.css';
 import { GoogleLogin } from '@react-oauth/google';
+import { Navigate, useNavigate } from 'react-router-dom'; // Import useNavigate
 
 
 
 const LogIn = () => {
     // State to manage user information and login 
     const [user, setUser] = useState(null);
+    const navigate = useNavigate();
 
     useEffect(() => {
         // Check if the user data is in localStorage
@@ -26,7 +28,7 @@ const LogIn = () => {
       setUser(userProfile); // Store user data in state
       localStorage.setItem('user', JSON.stringify(userProfile)); 
     }
-
+    navigate('/'); 
   
   };
 
@@ -56,6 +58,7 @@ const LogIn = () => {
     const handleLogout = () => {
         setUser(null); // Clear user state
         localStorage.removeItem('user'); // Remove user data from localStorage
+        // Navigate to Home after logout
     };
     return (
         <div class="log">
