@@ -2,15 +2,21 @@ import React from 'react';
 import './NavBar.css';
 
 const NavBar = () => {
+    const navLinks = [
+        { name: 'Home', path: '/' },
+        { name: 'Profile', path: '/profile' },
+        { name: 'LogIn', path: '/logIn' }
+    ];
     return (
-        <div className="navbar">
-            <ul>
-                <li><a href="#home">Home</a></li>
-                <li><a href="#services">Services</a></li>
-                <li><a href="#about">About</a></li>
-                <li><a href="#contact">Contact</a></li>
-            </ul>
-        </div>
+        <nav className="navbar">
+        <ul className="nav-links">
+            {navLinks.map((link, index) => (
+                <li key={index}>
+                    <a href={link.path}>{link.name}</a>
+                </li>
+            ))}
+        </ul>
+    </nav>
     );
 };
 

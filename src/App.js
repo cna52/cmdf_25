@@ -4,37 +4,22 @@ import Home from './components/Home'; // Your Home component
 import Profile from './components/Profile'; // Your Profile component
 import ChatBot from './components/ChatBot'; // Your ChatBot component
 import LogIn from './components/LogIn';
+import NavBar from "./components/NavBar";
 import './App.css'; // Your CSS file
 
 function App() {
   return (
-    <Router>
-      <div className="App">
-        <nav>
-          <ul>
-            <li>
-              <Link to="/">Home</Link>
-            </li>
-            <li>
-              <Link to="/ChatBot">ChatBot</Link>
-            </li>
-            <li>
-              <Link to="/Profile">Profile</Link>
-            </li>
-            <li>
-              <Link to="/LogIn">LogIn</Link>
-            </li>
-          </ul>
-        </nav>
-
+    <div>
+      <NavBar />
+      <Router>
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/ChatBot" element={<ChatBot />} />
-          <Route path="/Profile" element={<Profile />} />
-          <Route path="/LogIn" element={<LogIn />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/chatbot" element={<ChatBot />} />
+          <Route path="/login" element={<LogIn />} />
         </Routes>
-      </div>
-    </Router>
+      </Router>
+    </div>
   );
 }
 
