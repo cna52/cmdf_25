@@ -5,10 +5,19 @@ const Chat = () => {
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState([]);
   const [userId] = useState(Date.now().toString());
+  const [user, setUser] = useState(null); // State to store user data
   const chatWindowRef = useRef(null);
 
+  // Fetch user data from local storage
   useEffect(() => {
-    // Scroll to the latest message
+    const storedUser = JSON.parse(localStorage.getItem('user'));
+    if (storedUser) {
+      setUser(storedUser);
+    }
+  }, []);
+
+  // Scroll to the latest message
+  useEffect(() => {
     if (chatWindowRef.current) {
       chatWindowRef.current.scrollTop = chatWindowRef.current.scrollHeight;
     }
@@ -58,7 +67,7 @@ const Chat = () => {
                 ...(msg.sender === 'user' ? styles.userMessage : styles.botMessage),
               }}
             >
-              <strong>{msg.sender === 'user' ? 'You' : 'Bot'}:</strong>
+              <strong>{msg.sender === 'user' ? (user ? user.name : 'You') : 'Bot'}:</strong>
               {msg.sender === 'bot' ? (
                 <div dangerouslySetInnerHTML={{ __html: formatBotMessage(msg.text) }} />
               ) : (
@@ -89,11 +98,16 @@ const Chat = () => {
 const formatBotMessage = (text) => {
   if (!text) return '';
 
-  // Convert new lines into <br> for proper formatting
-  let formattedText = text.replace(/\n/g, '<br>');
+  // Convert **text** to <strong>text</strong> for bold formatting
+  let formattedText = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
 
-  // Convert lists (if any) into HTML lists
-  formattedText = formattedText.replace(/- (.+)/g, '<li>$1</li>');
+  // Convert new lines into <br> for proper formatting
+  formattedText = formattedText.replace(/\n/g, '<br>');
+
+  // Convert single * to bullet points
+  formattedText = formattedText.replace(/\* (.+)/g, '<li>$1</li>');
+
+  // Wrap bullet points in <ul> if there are any <li> tags
   if (formattedText.includes('<li>')) {
     formattedText = `<ul>${formattedText}</ul>`;
   }
@@ -115,8 +129,8 @@ const styles = {
   container: {
     display: 'flex',
     flexDirection: 'column',
-    height: '500px',
-    width: '400px',
+    height: '600px', // Increased height
+    width: '500px', // Increased width
     border: '1px solid #ccc',
     borderRadius: '10px',
     overflow: 'hidden',
